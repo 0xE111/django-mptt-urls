@@ -1,0 +1,4 @@
+include LICENSE
+include README.md
+recursive-include mptt-urls/static *
+recursive-include mptt-urls/templates *
