@@ -15,26 +15,26 @@ def translate_url(request, url, settings):
     url_list = url.split('/')
     del url_list[-1]  # Delete empty url after last slash
 
-    nodes = []
-    leaf = None
+    node = None
 
     # 2do: DRY!
     for i, url in enumerate(url_list):
-        if i != len(url_list) - 1:  # i is not last
+        if i != len(url_list) - 1:  # i is not last  # 2do: ugly!
             get_dict = {settings['node_settings'].get('slug', 'slug'): url}
-            node = get_object_or_404(settings['node_settings']['model'], **get_dict)
-            nodes.append(node)
+            get_object_or_404(settings['node_settings']['model'], **get_dict)  # 2do: Suppress output?
         else:
             # Last url
+            # 2do: DRY!
             try:
                 get_dict = {settings['node_settings'].get('slug', 'slug'): url}
                 node = settings['node_settings']['model'].objects.get(**get_dict)
-                nodes.append(node)
+                is_leaf = False
             except:
                 get_dict = {settings['leaf_settings'].get('slug', 'slug'): url}
-                leaf = get_object_or_404(settings['leaf_settings']['model'], **get_dict)
+                node = get_object_or_404(settings['leaf_settings']['model'], **get_dict)
+                is_leaf = True
 
-    if leaf:
+    if is_leaf:
         which_settings = 'leaf_settings'
     else:
         which_settings = 'node_settings'
@@ -48,9 +48,7 @@ def translate_url(request, url, settings):
             template,
             {
                 'mptt_urls': {
-                    'leaf': leaf,
-                    'node': nodes[-1],
-                    'nodes': nodes,
+                    'node': node,
                 }
             }
         )
@@ -61,9 +59,7 @@ def translate_url(request, url, settings):
         return view(
             request,
             mptt_urls={
-                'leaf': leaf,
-                'node': nodes[-1],
-                'nodes': nodes,
+                'node': node,
             }
         )
     else:
