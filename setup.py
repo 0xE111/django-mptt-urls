@@ -8,11 +8,11 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='django-mptt-urls',
-    version='0.1',
+    version='1.0',
     packages=find_packages(),
     include_package_data=True,
     install_requires=['django>=1.5.1', 'django-mptt>=0.5.5'],
-    license='MIT License',  # example license
+    license='MIT License',
     description='Django app for creating hierarchical URLs associated with django-MPTT models.',
     long_description=README,
     url='https://github.com/MrKesn/django-mptt-urls',

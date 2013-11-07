@@ -1,0 +1,15 @@
+<html>
+    <head>
+        <title>{{ mptt_urls.object.name }}</title>
+    </head>
+    <body>
+        Gallery
+        {% for ancestor in mptt_urls.object.parent.get_ancestors %}
+            > <a href="{{ ancestor.get_absolute_url }}">{{ ancestor.name }}</a>
+        {% endfor %}
+        > <a href="{{ mptt_urls.object.parent.get_absolute_url }}">{{ mptt_urls.object.parent.name }}</a>
+        > <strong>{{ mptt_urls.object.name }}</strong>
+
+        <h3>Photo: {{ mptt_urls.object.name }}</h3>
+    </body>
+</html>

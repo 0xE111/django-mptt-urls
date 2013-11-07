@@ -1,66 +1,75 @@
 from django.shortcuts import render, get_object_or_404
 from django.core.exceptions import ImproperlyConfigured
-from importlib import import_module
+from mptt_urls import adv_import, make_superroot
 
 
-def import_view(path):
-    modules = path.split('.')
-    module = '.'.join(modules[0:-1])
-    view = modules[-1]
+def process_url(request, url, settings):
+    slug_list = url.split('/')
+    if slug_list[-1] == '':
+        del slug_list[-1]  # Delete empty slug after last slash
 
-    return getattr(import_module(module), view)
+    node_slug_field = settings['node'].get('slug_field', 'slug')
+    leaf_slug_field = settings['leaf'].get('slug_field', 'slug')
 
+    node_model = adv_import(settings['node']['model'])
+    leaf_model = adv_import(settings['leaf']['model'])
 
-def translate_url(request, url, settings):
-    url_list = url.split('/')
-    del url_list[-1]  # Delete empty url after last slash
-
-    node = None
-
-    # 2do: DRY!
-    for i, url in enumerate(url_list):
-        if i != len(url_list) - 1:  # i is not last  # 2do: ugly!
-            get_dict = {settings['node_settings'].get('slug', 'slug'): url}
-            get_object_or_404(settings['node_settings']['model'], **get_dict)  # 2do: Suppress output?
-        else:
-            # Last url
-            # 2do: DRY!
-            try:
-                get_dict = {settings['node_settings'].get('slug', 'slug'): url}
-                node = settings['node_settings']['model'].objects.get(**get_dict)
-                is_leaf = False
-            except:
-                get_dict = {settings['leaf_settings'].get('slug', 'slug'): url}
-                node = get_object_or_404(settings['leaf_settings']['model'], **get_dict)
-                is_leaf = True
-
-    if is_leaf:
-        which_settings = 'leaf_settings'
+    if slug_list == []:
+        # Root
+        object_type = 'node'
+        object = make_superroot(node_model)
+        object.is_superroot = lambda: True
     else:
-        which_settings = 'node_settings'
+        parent = None
+        for slug in slug_list[:-1]:
+            attrs = {
+                node_slug_field: slug,
+                'parent': parent,
+            }
+            object = get_object_or_404(node_model, **attrs)
+            parent = object
+        else:
+            # Last slug
+            slug = slug_list[-1]
+            try:
+                attrs = {
+                    node_slug_field: slug,
+                    'parent': parent,
+                }
+                object = node_model.objects.get(**attrs)
+                object.is_superroot = lambda: False
+                object_type = 'node'
+            except node_model.DoesNotExist:
+                attrs = {
+                    leaf_slug_field: slug,
+                    'parent': parent,
+                }
+                object = get_object_or_404(leaf_model, **attrs)
+                object.is_superroot = lambda: False
+                object_type = 'leaf'
 
-    template = settings[which_settings].get('template', None)
-    view = settings[which_settings].get('view', None)
+    template = settings[object_type].get('template', None)
+    view = settings[object_type].get('view', None)
 
-    if template:
+    if view and template:
+        raise ImproperlyConfigured('"template" and "view" values cannot be used simultaneously in mptt_urls settings')
+    elif view:
+        view = adv_import(view)
+        return view(
+            request,
+            mptt_urls={
+                'object': object,
+            },
+        )
+    elif template:
         return render(
             request,
             template,
             {
                 'mptt_urls': {
-                    'node': node,
+                    'object': object,
                 }
             }
         )
-    elif view:
-        if isinstance(view, basestring):
-            view = import_view(view)
-
-        return view(
-            request,
-            mptt_urls={
-                'node': node,
-            }
-        )
     else:
-        raise ImproperlyConfigured('Cannot find `template` or `view` value in mptt_urls settings')
+        raise ImproperlyConfigured('Cannot find "template" or "view" value in mptt_urls settings')
