@@ -20,16 +20,31 @@ In standard django app usual url resolution looks like:
 
 With django-mptt-urls it looks like:
 
-`URL: /gallery/my-pets/dogs/` ---> `MPTT_URLS: select view` --arg--> `VIEW: gallery.views.photo`
+`URL: /gallery/my-pets/dogs/` ---> `MPTT_URLS: select view` --mptt_urls['object']--> `VIEW: gallery.views.photo`
 
 or
 
-`URL: /gallery/my-pets/dogs/` ---> `MPTT_URLS: select template` --arg--> `TEMPLATE: gallery/photo.html`
+`URL: /gallery/my-pets/dogs/` ---> `MPTT_URLS: select template` --mptt_urls.object--> `TEMPLATE: gallery/photo.html`
 
 Mptt_urls does these things:
 * Checks URL for being valid (or Http404)
 * Selects corresponding view/template
-* Passes extra argument to the view/template: mptt_urls={'node': node, 'leaf': leaf}
+* Passes extra argument to the view/template: mptt_urls['object']
+
+
+Example
+-------
+
+The simpliest way to understand how django_mptt_urls works is to clone this GitHub project and to run test_project (no extra settings required):
+```
+git clone https://github.com/MrKesn/django-mptt-urls.git
+cd django-mptt-urls
+python setup.py install
+cd test_project
+python manage.py runserver
+```
+
+And point your browser to 127.0.0.1:8000
 
 Requirements
 ------------
@@ -45,20 +60,32 @@ from mptt.models import MPTTModel, TreeForeignKey
 
 class Category(MPTTModel):
     ...
-    parent = TreeForeignKey('self', ...)
+    parent = TreeForeignKey('self', null=True, blank=True, verbose_name='parent category', related_name='categories')
+    slug = models.SlugField()
+    class Meta:
+        unique_together = ('slug', 'parent')
 
 class Photo(models.Model):
     ...
-    parent = TreeForeignKey(Category, ...)
+    parent = TreeForeignKey(Category, verbose_name='parent category', related_name='photos')
+    slug = models.SlugField()
+
+    class Meta:
+        unique_together = ('slug', 'parent')
 ```
 
-Here gallery consists of Categories, and leaf Categories are containers for Photos. We will continue using our gallery example in the next sections.
+Here gallery consists of Categories, and leaf Categories are containers for Photos. We will continue using our gallery example in next sections.
 
 
 Installation
 ------------
 
-Since django-mptt-urls is not added to PyPI, install it manually:
+You can use pip:
+```
+pip install django-mptt-urls
+```
+
+Or, if you want an exaple project being included (test_project), clone the GitHub repo:
 ```
 git clone https://github.com/MrKesn/django-mptt-urls.git
 cd django-mptt-urls
@@ -82,32 +109,30 @@ Select the *base URL* where the hierarchy URLs will be located. In these URLs th
 `http://best-photographer.com/gallery/miscellaneous/my-pets/dogs/husky/Mishka`
 
 Then, in your `urls.py`, 
-* import `mptt_urls_register`
+* import `mptt_urls`
 * add a variable `mptt_urls_gallery_settings` containing gallery settings, 
-* call `mptt_urls_register`,
+* call `mptt_urls.register`,
 * include `mptt.urls` :
 
 ```
 # urls.py
 ...
-from mptt_urls import mptt_urls_register
+import mptt_urls
 
 mptt_urls_gallery_settings = {
-    'node_settings': {
-        'model': Category,
+    'node': {
+        'model': 'gallery.models.Category',
         'view': 'gallery.views.category',
-        'parent': 'parent',
-        'slug': 'slug',
+        'slug_field': 'slug',
     },
-    'leaf_settings': {
-        'model': Photo,
+    'leaf': {
+        'model': 'gallery.models.Photo',
         'template': 'gallery/photo.html',
-        'parent': 'parent',
-        'slug': 'slug',
+        'slug_field': 'slug',
     }
 }
 
-mptt_urls_register('gallery', mptt_urls_gallery_settings)
+mptt_urls.register('gallery', mptt_urls_gallery_settings)
 
 urlpatterns = patterns('',
     ...
@@ -117,15 +142,59 @@ urlpatterns = patterns('',
 ```
 
 Here is what we've done:
+* We are storing our gallery settings in `mptt_urls_gallery_settings` variable. It has settings for nodes and leaves, the fields are:
+* ** `model`: Which model to use. As we've defined in `Requirements` section, nodes are Categories instances, leaves are Photos instances.
+* ** `view`: A view which will be called. Mptt_urls provides an argument `mptt_urls` to the view, so be sure to accept this arg in a view (`def someview(request, mptt_urls=None)`). `view` can be either a view or a string like `'gallery.views.someview'`.
+* ** `template`: If you do not need a view, you can redirect mptt_urls output directly to a template. The rule is: if you need some extra logic/calculations in your view, use `view`; otherwise use `template`.
+* ** `slug_field`: Name of 'slug' field. The field's value will be taken for constructing and resolving URLs. It's up to you to generate slug for model instances! (Use `prepopulate_fields` in admin, or django-autoslug, etc.)
+* We call `mptt_urls.register`, which hooks into models' classes (Category and Photo here) and defines `get_absolute_url` methods. First arg is *base URL*, second arg contains the settings.
+* We include `mptt_urls.urls` in `url(r'^gallery/', ...)`. That means that **every URL starting with /gallery/ will be caught by mptt_urls** and treated as hierarchical path. Be careful with it, especially when you do `url(r^/', include('mptt_urls.urls'), ...)`.
 
-1) We are storing our gallery settings in `mptt_urls_gallery_settings` variable. It has settings for nodes and leaves, the fields are:
-* `model`: Which model to use. As we've defined in `Requirements` section, nodes are Categories instances, leaves are Photos instances.
-* `view`: A view which will be called. Mptt_urls provides an argument `mptt_urls` (python dictionary) to the view, so be sure to accept this arg in a view (`def someview(request, mptt_urls=None)`). `view` can be either a view or a string like `'gallery.views.someview'`.
-* `template`: If you do not need a view, you can redirect mptt_urls output directly to a template. The rule is: if you need only the object associated with the URL, use `template`; if you need some extra logic/calculations, use `view`.
-* `parent`: Name of 'parent' field (foreign key field to parent(ancestor) of the model).
-* `slug`: Name of 'slug' field. The field's value will be taken for constructing and resolving URLs.
+Usage
+-----
 
-2) we call `mptt_urls_register`, which hooks into models' classes (Category and Photo here) and defines `get_absolute_url` methods. First arg is *base URL*, second arg contains our settings.
+Now, when everything is set up, it's time to use mptt_urls.
+The views you specified in the settings (`'gallery.views.category'` in example) will get `mptt_urls` arg, containing `object` - instance of a model, corresponding to the url. Just like this:
+```
+# gallery.views.category
+def category(request, mptt_urls):
+    # Here extra logic is: we increase the number of category views
+    object = mptt_urls['object']
+    if not object is None:
+        object.views += 1
+        object.save()
 
-3) We include `mptt_urls.urls` in `url(r'^gallery/', ...)`. That means that **every URL starting with /gallery/ will be caught by mptt_urls** and treated as hierarchical path. Be careful with it, especially when you do `url(r^/', include('mptt_urls.urls'), ...)`.
+    return render(
+        request,
+        'gallery/category.html',
+        {
+            'mptt_urls': mptt_urls,
+        }
+    )
+```
+
+The templates will get the same arg `mptt_urls` containing `object`, like this:
+```
+# gallery/photo.html
+<html>
+    <body>
+        {{ mptt_urls.object }}
+    </body>
+</html>
+```
+
+The SuperRoot
+-------------
+
+To simplify developer's life and to follow KISS, django_mptt_urls *always* passes and arg `object` to a view/template. There are 3 types of instances which an `object` can be:
+* leaf - A leaf object, the end point of path. In the example, a leaf is a Photo instance.
+* node - Nodes which actually create the hierarchy. In the example, a node is a Category instance.
+* superroot - A fake node which is parent to all real root nodes (root node is such a node that node.parent == None). You will find superroot helpful when you process base path (/gallery/). When you visit /gallery/ url, there is actually no object associated with the path, and you probably would like to simply show all root nodes to the user. So, mptt_urls['object'] here is a superroot, and it has 1 working method: get_children(), which will return all root nodes. Introducing superroot allows you to write only one view/template for both root and non-root urls. Oh, just check `test_project` for clear example.
+
+`mptt_urls['object'].is_superroot()` will help you to discover if the object is superroot.
+
+License
+-------
+MIT.
+View license file for details.
 
