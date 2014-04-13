@@ -2,14 +2,14 @@ from importlib import import_module
 
 
 def adv_import(obj):
-    if isinstance(obj, basestring): 
+    if isinstance(obj, basestring):
         modules = obj.split('.')
         module = '.'.join(modules[0:-1])
         view = modules[-1]
 
         return getattr(import_module(module), view)
     else:
-        return view
+        return obj
 
 
 def register(base_url, settings):
