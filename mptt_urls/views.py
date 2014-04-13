@@ -52,7 +52,8 @@ def process_url(request, url, settings):
     view = settings[object_type].get('view', None)
 
     if view and template:
-        raise ImproperlyConfigured('"template" and "view" values cannot be used simultaneously in mptt_urls settings')
+        raise ImproperlyConfigured('"template" and "view" values cannot be '
+                                   'used simultaneously in mptt_urls settings')
     elif view:
         view = adv_import(view)
         if hasattr(view, 'as_view'):
@@ -74,4 +75,5 @@ def process_url(request, url, settings):
             }
         )
     else:
-        raise ImproperlyConfigured('Cannot find "template" or "view" value in mptt_urls settings')
+        raise ImproperlyConfigured('Cannot find "template" or "view" value '
+                                   'in mptt_urls settings')
