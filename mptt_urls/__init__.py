@@ -2,14 +2,14 @@ from importlib import import_module
 
 
 def adv_import(obj):
-    if isinstance(obj, basestring): 
+    if isinstance(obj, basestring):
         modules = obj.split('.')
         module = '.'.join(modules[0:-1])
         view = modules[-1]
 
         return getattr(import_module(module), view)
     else:
-        return view
+        return obj
 
 
 def register(base_url, settings):
@@ -17,11 +17,15 @@ def register(base_url, settings):
         slug_list = []
         if isinstance(instance, adv_import(settings['leaf']['model'])):
             # Model is leaf
-            slug_list.append(getattr(instance, settings['leaf'].get('slug_field', 'slug')))
-            instance = getattr(instance, settings['leaf'].get('parent', 'parent'))
+            slug_list.append(getattr(instance, settings['leaf'].get(
+                'slug_field', 'slug')))
+            instance = getattr(instance, settings['leaf'].get(
+                'parent', 'parent'))
         while instance is not None:
-            slug_list.append(getattr(instance, settings['node'].get('slug_field', 'slug')))
-            instance = getattr(instance, settings['node'].get('parent', 'parent'))
+            slug_list.append(getattr(instance, settings['node'].get(
+                'slug_field', 'slug')))
+            instance = getattr(instance, settings['node'].get(
+                'parent', 'parent'))
 
         return '/' + base_url + '/' + '/'.join(reversed(slug_list)) + '/'
 
