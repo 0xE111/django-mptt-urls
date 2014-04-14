@@ -1,7 +1,3 @@
-2do
----
-Use ABSOLUTE_URL_OVERRIDES option
-
 Overview
 --------
 
@@ -107,21 +103,15 @@ INSTALLED_APPS = (
 )
 ```
 
-Select the *base URL* where the hierarchy URLs will be located. In these URLs the *base URL* is `gallery/`:
-
-`http://best-photographer.com/gallery/weddings/Dexter-and-Rita/photo-1`
-`http://best-photographer.com/gallery/miscellaneous/my-pets/dogs/husky/Mishka`
-
 Then, in your `urls.py`, 
-* import `mptt_urls`
-* add a variable `mptt_urls_gallery_settings` containing gallery settings, 
-* call `mptt_urls.register`,
-* include `mptt.urls` :
+* import: `from mptt_urls import url_mptt`
+* add a variable `mptt_urls_gallery_settings` containing gallery settings,
+* add url `url_mptt` :
 
 ```
 # urls.py
 ...
-import mptt_urls
+from mptt_urls import url_mptt
 
 mptt_urls_gallery_settings = {
     'node': {
@@ -136,11 +126,9 @@ mptt_urls_gallery_settings = {
     }
 }
 
-mptt_urls.register('gallery', mptt_urls_gallery_settings)
-
 urlpatterns = patterns('',
     ...
-    url(r'^gallery/', include('mptt_urls.urls'), {'settings': mptt_urls_gallery_settings}),
+    url_mptt(r'^gallery/(?P<url>.*)', name='gallery', settings=mptt_urls_gallery_settings),
     ...
 )
 ```
@@ -148,11 +136,11 @@ urlpatterns = patterns('',
 Here is what we've done:
 * We are storing our gallery settings in `mptt_urls_gallery_settings` variable. It has settings for nodes and leaves, the fields are:
 * ** `model`: Which model to use. As we've defined in `Requirements` section, nodes are Categories instances, leaves are Photos instances.
-* ** `view`: A view which will be called. Mptt_urls provides an argument `mptt_urls` to the view, so be sure to accept this arg in a view (`def someview(request, mptt_urls=None)`). `view` can be either a view or a string like `'gallery.views.someview'`.
+* ** `view`: A view which will be called. Mptt_urls provides an argument `mptt_urls` to the view, so be sure to accept this arg in a view (`def someview(request, mptt_urls=None)`). `view` should be a string like `'gallery.views.someview'`.
 * ** `template`: If you do not need a view, you can redirect mptt_urls output directly to a template. The rule is: if you need some extra logic/calculations in your view, use `view`; otherwise use `template`.
 * ** `slug_field`: Name of 'slug' field. The field's value will be taken for constructing and resolving URLs. It's up to you to generate slug for model instances! (Use `prepopulate_fields` in admin, or django-autoslug, etc.)
-* We call `mptt_urls.register`, which hooks into models' classes (Category and Photo here) and defines `get_absolute_url` methods. First arg is *base URL*, second arg contains the settings.
-* We include `mptt_urls.urls` in `url(r'^gallery/', ...)`. That means that **every URL starting with /gallery/ will be caught by mptt_urls** and treated as hierarchical path. Be careful with it, especially when you do `url(r^/', include('mptt_urls.urls'), ...)`.
+* We set up new url catcher: url_mptt(...). 1st arg is usual url regexp. Do not forget to catch `(?P<url>.*)` pattern. 2nd arg is url name, so thet you can use `reverse(name, kwargs={'url': ''})` in your code. 3rd arg contains settings. Note that **url_mptt does not accept `view` variable**.
+* Note that **every URL starting with /gallery/ will be caught by mptt_urls** and treated as hierarchical path. Be careful with it.
 
 Usage
 -----
@@ -187,6 +175,10 @@ The templates will get the same arg `mptt_urls` containing `object`, like this:
 </html>
 ```
 
+Feel free to use `get_absolute_url()` method for hierarchical objects - it will return correct hierarchical urls.
+
+To get the root, use `reverse('gallery', kwargs={'url': ''})` (in view) or `{% url 'gallery' url='' %}` (in templates.
+
 The SuperRoot
 -------------
 
@@ -201,4 +193,8 @@ License
 -------
 MIT.
 View license file for details.
+
+P.S.
+----
+Please feel free to make pull requests! :)
 
