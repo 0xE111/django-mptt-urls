@@ -8,7 +8,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='django-mptt-urls',
-    version='1.0',
+    version='1.0.1',
     packages=find_packages(),
     include_package_data=True,
     install_requires=['django>=1.5.1', 'django-mptt>=0.5.5'],
