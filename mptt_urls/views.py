@@ -1,6 +1,10 @@
+# coding: utf-8
+
 from django.shortcuts import render, get_object_or_404
 from django.core.exceptions import ImproperlyConfigured
-from mptt_urls import adv_import, make_superroot
+from django.utils.module_loading import import_by_path
+
+from mptt_urls import superroot
 
 
 def process_url(request, url, settings):
@@ -11,14 +15,13 @@ def process_url(request, url, settings):
     node_slug_field = settings['node'].get('slug_field', 'slug')
     leaf_slug_field = settings['leaf'].get('slug_field', 'slug')
 
-    node_model = adv_import(settings['node']['model'])
-    leaf_model = adv_import(settings['leaf']['model'])
+    node_model = import_by_path(settings['node']['model'])
+    leaf_model = import_by_path(settings['leaf']['model'])
 
     if slug_list == []:
         # Root
         object_type = 'node'
-        object = make_superroot(node_model)
-        object.is_superroot = lambda: True
+        object = superroot(node_model)
     else:
         parent = None
         for slug in slug_list[:-1]:
@@ -37,7 +40,6 @@ def process_url(request, url, settings):
                     'parent': parent,
                 }
                 object = node_model.objects.get(**attrs)
-                object.is_superroot = lambda: False
                 object_type = 'node'
             except node_model.DoesNotExist:
                 attrs = {
@@ -45,17 +47,16 @@ def process_url(request, url, settings):
                     'parent': parent,
                 }
                 object = get_object_or_404(leaf_model, **attrs)
-                object.is_superroot = lambda: False
                 object_type = 'leaf'
+            object.is_superroot = lambda: False
 
     template = settings[object_type].get('template', None)
     view = settings[object_type].get('view', None)
 
     if view and template:
-        raise ImproperlyConfigured('"template" and "view" values cannot be '
-                                   'used simultaneously in mptt_urls settings')
+        raise ImproperlyConfigured('"template" and "view" values cannot be used simultaneously in mptt_urls settings')
     elif view:
-        view = adv_import(view)
+        view = import_by_path(view)
         if hasattr(view, 'as_view'):
             view = view.as_view()
         return view(
@@ -75,5 +76,4 @@ def process_url(request, url, settings):
             }
         )
     else:
-        raise ImproperlyConfigured('Cannot find "template" or "view" value '
-                                   'in mptt_urls settings')
+        raise ImproperlyConfigured('Cannot find "template" or "view" value in mptt_urls settings')

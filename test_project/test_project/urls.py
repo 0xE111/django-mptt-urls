@@ -1,8 +1,12 @@
-from django.conf.urls import patterns, include, url
-import mptt_urls
-from django.views.generic import TemplateView
+# coding: utf-8
 
+from django.conf.urls import patterns, include, url
+from django.views.generic import TemplateView
 from django.contrib import admin
+
+from mptt_urls import url_mptt
+
+
 admin.autodiscover()
 
 # Mptt_urls gallery settings
@@ -18,11 +22,11 @@ mptt_urls_gallery_settings = {
         'slug_field': 'slug',
     }
 }
-mptt_urls.register('gallery', mptt_urls_gallery_settings)
 
-urlpatterns = patterns('',
+urlpatterns = patterns(
+    '',
     url(r'^$', TemplateView.as_view(template_name='home.html')),
-    url(r'^gallery/', include('mptt_urls.urls'), {'settings': mptt_urls_gallery_settings}),
+    url_mptt(r'^gallery/(?P<url>.*)', name='gallery', settings=mptt_urls_gallery_settings),  # Here we add special mptt url
 
     url(r'^admin/', include(admin.site.urls)),
 )

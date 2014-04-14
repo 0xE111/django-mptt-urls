@@ -3,7 +3,7 @@
         <title>{{ mptt_urls.object.name }}</title>
     </head>
     <body>
-        Gallery
+        <a href="{% url 'gallery' url='' %}">Gallery</a>
         {% for ancestor in mptt_urls.object.parent.get_ancestors %}
             > <a href="{{ ancestor.get_absolute_url }}">{{ ancestor.name }}</a>
         {% endfor %}
