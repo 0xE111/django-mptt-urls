@@ -67,7 +67,7 @@ class Category(MPTTModel):
 
 class Photo(models.Model):
     ...
-    parent = TreeForeignKey(Category, verbose_name='parent category', related_name='photos')
+    parent = models.ForeignKey(Category)
     slug = models.SlugField()
 
     class Meta:
@@ -118,11 +118,13 @@ mptt_urls_gallery_settings = {
         'model': 'gallery.models.Category',
         'view': 'gallery.views.category',
         'slug_field': 'slug',
+        'parent': 'parent',
     },
     'leaf': {
         'model': 'gallery.models.Photo',
         'template': 'gallery/photo.html',
         'slug_field': 'slug',
+        'parent': 'parent',
     }
 }
 
@@ -139,6 +141,7 @@ Here is what we've done:
 * ** `view`: A view which will be called. Mptt_urls provides an argument `mptt_urls` to the view, so be sure to accept this arg in a view (`def someview(request, mptt_urls=None)`). `view` should be a string like `'gallery.views.someview'`.
 * ** `template`: If you do not need a view, you can redirect mptt_urls output directly to a template. The rule is: if you need some extra logic/calculations in your view, use `view`; otherwise use `template`.
 * ** `slug_field`: Name of 'slug' field. The field's value will be taken for constructing and resolving URLs. It's up to you to generate slug for model instances! (Use `prepopulate_fields` in admin, or django-autoslug, etc.)
+* ** `parent`: The name of model's parent field.
 * We set up new url catcher: url_mptt(...). 1st arg is usual url regexp. Do not forget to catch `(?P<url>.*)` pattern. 2nd arg is url name, so thet you can use `reverse(name, kwargs={'url': ''})` in your code. 3rd arg contains settings. Note that **url_mptt does not accept `view` variable**.
 * Note that **every URL starting with /gallery/ will be caught by mptt_urls** and treated as hierarchical path. Be careful with it.
 
