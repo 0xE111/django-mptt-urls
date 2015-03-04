@@ -8,16 +8,16 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='django-mptt-urls',
-    version='2.0',
+    version='2.0.0',
     packages=find_packages(),
     include_package_data=True,
     install_requires=['django>=1.7', 'django-mptt>=0.6.1'],
     license='MIT License',
     description='Django app for creating hierarchical URLs associated with django-MPTT models.',
     long_description=README,
-    url='https://github.com/MrKesn/django-mptt-urls',
+    url='https://github.com/c0ntribut0r/django-mptt-urls',
     author='Alex',
-    author_email='alexandr@hobby4me.ru',
+    author_email='',
     keywords='django mptt urls hierarchy clean friendly',
     classifiers=[
         'Environment :: Web Environment',

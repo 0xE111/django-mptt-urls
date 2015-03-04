@@ -4,7 +4,7 @@ from django.shortcuts import render
 from .models import Category
 
 
-def category(request, instance, extra):
+def category(request, path, instance, extra):
     # This is an example view.
     # As you can see, this view receives additional arg - instance.
 

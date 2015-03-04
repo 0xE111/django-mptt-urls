@@ -20,7 +20,7 @@ class view():
             raise ValueError('Path was not captured! Please capture it in your urlconf. Example: url(r\'^gallery/(?P<path>.*)\', mptt_urls.view(...), ...)')
 
         instance = None  # actual instance the path is pointing to (None by default)
-        path = kwargs.pop('path')
+        path = kwargs['path']
         instance_slug = path.split('/')[-1]  # slug of the instance
 
         if instance_slug:
