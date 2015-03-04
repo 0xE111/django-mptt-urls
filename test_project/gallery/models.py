@@ -1,5 +1,9 @@
+# coding: utf-8
 from django.db import models
+from django.core.urlresolvers import reverse
+
 from mptt.models import MPTTModel, TreeForeignKey
+
 
 class Category(MPTTModel):
     name = models.CharField('category name', max_length=32)
@@ -10,6 +14,9 @@ class Category(MPTTModel):
 
     def __unicode__(self):
         return self.name
+
+    def get_absolute_url(self):
+        return reverse('gallery', kwargs={'path': self.get_path()})
 
 
 class Photo(models.Model):

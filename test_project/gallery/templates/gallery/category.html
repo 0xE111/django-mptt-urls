@@ -1,30 +1,34 @@
 <html>
     <head>
-        <title>{% if mptt_urls.object.is_superroot %}Gallery main page{% else %}{{ mptt_urls.object.name }}{% endif %}</title>
+        <title>{% if instance %}{{ instance.name }}{% else %}Gallery main page{% endif %}</title>
     </head>
     <body>
-        <h3>{% if mptt_urls.object.is_superroot %}Gallery main page{% else %}{{ mptt_urls.object.name }}{% endif %}</h3>
+        <h3>{% if instance %}{{ instance.name }}{% else %}Gallery main page{% endif %}</h3>
 
-        <a href="{% url 'gallery' url='' %}">Gallery</a>
-        {% for ancestor in mptt_urls.object.get_ancestors %}
+        <a href="{% url 'gallery' path='' %}">Gallery main page</a>
+        {% for ancestor in instance.get_ancestors %}
             > <a href="{{ ancestor.get_absolute_url }}">{{ ancestor.name }}</a>
         {% endfor %}
-        > <strong>{{ mptt_urls.object.name }}</strong>
+        > <strong>{{ instance.name }}</strong>
 
+        <h4>Subcategories:</h4>
         <ul>
-            {% if not mptt_urls.object.is_leaf_node %}
-                {% for child in mptt_urls.object.get_children %}
-                    <li><a href="{{ child.get_absolute_url }}">{{ child.name }}</a> ({{ child.views }} views)</li>
-                {% empty %}
-                    <li>No items</li>
-                {% endfor %}
-            {% else %}
-                {% for photo in mptt_urls.object.photos.all %}
-                    <li><a href="{{ photo.get_absolute_url }}">{{ photo.name }}</a></li>
-                {% empty %}
-                    <li>No photos</li>
-                {% endfor %}
-            {% endif %}
+            {% for child in children %}
+                <li><a href="{{ child.get_absolute_url }}">{{ child.name }}</a> ({{ child.views }} views)</li>
+            {% empty %}
+                <li>No items</li>
+            {% endfor %}
         </ul>
+
+        <h4>Photos:</h4>
+        <ul>
+            {% for photo in instance.photos.all %}
+                <li>{{ photo.name }}</li>
+            {% empty %}
+                <li>No items</li>
+            {% endfor %}
+        </ul>
+
+        <small>{{ extra }}</small>
     </body>
 </html>

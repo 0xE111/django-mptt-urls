@@ -1,20 +1,25 @@
+# coding: utf-8
 from django.shortcuts import render
 
-def category(request, mptt_urls):
-    # This is an example view.
-    # Use views in mptt_urls only if you have some extra logic that cannot be done in template.
-    # Otherwise, use 'template' setting.
+from .models import Category
 
-    # Here extra logic is: we increase the number of category views
-    object = mptt_urls['object']
-    if not object is None:
-        object.views += 1
-        object.save()
+
+def category(request, instance, extra):
+    # This is an example view.
+    # As you can see, this view receives additional arg - instance.
+
+    # Some logic here: we increase the number of category views (hits).
+    # Instance will be None if not resolved
+    if instance:
+        instance.views += 1
+        instance.save()
 
     return render(
         request,
         'gallery/category.html',
         {
-            'mptt_urls': mptt_urls,
+            'instance': instance,
+            'children': instance.get_children() if instance else Category.objects.root_nodes(),
+            'extra': extra,
         }
     )
