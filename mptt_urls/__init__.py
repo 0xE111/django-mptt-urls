@@ -1,5 +1,6 @@
 # coding: utf-8
 from django.utils.module_loading import import_string
+from django.core.urlresolvers import reverse
 
 
 def _load(module):
@@ -7,13 +8,16 @@ def _load(module):
 
 
 class view():
-    def __init__(self, model, view, slug_field):
+    def __init__(self, model, view, slug_field, set_abs_url_getter=True):
         self.model = _load(model)
         self.view = _load(view)
         self.slug_field = slug_field
 
         # define 'get_path' method for model
         self.model.get_path = lambda instance: '/'.join([getattr(item, slug_field) for item in instance.get_ancestors(include_self=True)])
+        # define 'get_absolute_url' method for model
+        if set_abs_url_getter and not hasattr(self.model, 'get_absolute_url'):
+            self.model.get_absolute_url = lambda instance: reverse(self.view, kwargs={'path': instance.get_path()})
 
     def __call__(self, *args, **kwargs):
         if 'path' not in kwargs:
