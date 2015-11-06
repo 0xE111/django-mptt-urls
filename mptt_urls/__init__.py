@@ -13,7 +13,7 @@ class view():
         self.slug_field = slug_field
 
         # define 'get_path' method for model
-        self.model.get_path = lambda instance: '/'.join([getattr(item, slug_field) for item in instance.get_ancestors(include_self=True)])
+        self.model.get_path = lambda instance: '/'.join([getattr(item, slug_field) for item in instance.get_ancestors(include_self=True)]) + '/'
 
     def __call__(self, *args, **kwargs):
         if 'path' not in kwargs:
@@ -21,7 +21,7 @@ class view():
 
         instance = None  # actual instance the path is pointing to (None by default)
         path = kwargs['path']
-        instance_slug = path.split('/')[-1]  # slug of the instance
+        instance_slug = path.split('/')[-2]  # slug of the instance
 
         if instance_slug:
             candidates = self.model.objects.filter(**{self.slug_field: instance_slug})  # candidates to be the instance
