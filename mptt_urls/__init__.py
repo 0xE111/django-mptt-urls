@@ -21,7 +21,10 @@ class view():
 
         instance = None  # actual instance the path is pointing to (None by default)
         path = kwargs['path']
-        instance_slug = path.split('/')[-2]  # slug of the instance
+        try:
+            instance_slug = path.split('/')[-2]  # slug of the instance
+        except IndexError:
+            instance_slug = None
 
         if instance_slug:
             candidates = self.model.objects.filter(**{self.slug_field: instance_slug})  # candidates to be the instance
