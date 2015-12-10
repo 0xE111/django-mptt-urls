@@ -101,6 +101,11 @@ class Category(MPTTModel):
 ```
 Here, we use `Category.get_path()` which is available since using `mptt_urls.view`.
 
+If you use namespaced url routing, don't forget to add [namespace specifier](https://docs.djangoproject.com/en/1.9/topics/http/urls/#reversing-namespaced-urls) like this:
+```
+return reverse('namespace:gallery', kwargs={'path': self.get_path()})
+```
+
 License
 -------
 MIT. Do whatever you like.
