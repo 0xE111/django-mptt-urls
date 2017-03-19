@@ -7,7 +7,7 @@ def _load(module):
 
 
 class view():
-    def __init__(self, model, view, slug_field):
+    def __init__(self, model, view, slug_field='slug'):
         self.model = _load(model)
         self.view = _load(view)
         self.slug_field = slug_field
