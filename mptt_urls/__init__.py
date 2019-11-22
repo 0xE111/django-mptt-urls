@@ -1,4 +1,4 @@
-# coding: utf-8
+from django.conf import settings
 from django.utils.module_loading import import_string
 
 
@@ -7,13 +7,17 @@ def _load(module):
 
 
 class view():
-    def __init__(self, model, view, slug_field='slug'):
+    def __init__(self, model, view, slug_field='slug', trailing_slash=getattr(settings, 'APPEND_SLASH', True)):
         self.model = _load(model)
         self.view = _load(view)
         self.slug_field = slug_field
+        self.trailing_slash = trailing_slash
 
         # define 'get_path' method for model
-        self.model.get_path = lambda instance: '/'.join([getattr(item, slug_field) for item in instance.get_ancestors(include_self=True)]) + '/'
+        self.model.get_path = lambda instance: '/'.join([
+            getattr(item, slug_field)
+            for item in instance.get_ancestors(include_self=True)
+        ]) + ('/' if self.trailing_slash else '')
 
     def __call__(self, *args, **kwargs):
         if 'path' not in kwargs:
@@ -22,7 +26,7 @@ class view():
         instance = None  # actual instance the path is pointing to (None by default)
         path = kwargs['path']
         try:
-            instance_slug = path.split('/')[-2]  # slug of the instance
+            instance_slug = path.split('/')[-2 if self.trailing_slash else -1]  # slug of the instance
         except IndexError:
             instance_slug = None
 

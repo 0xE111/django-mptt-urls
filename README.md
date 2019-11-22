@@ -27,9 +27,6 @@ And visit 127.0.0.1:8000 in your browser.
 
 Requirements
 ------------
-
-Developed using django 1.7, python 3.4.3, other versions may work too. If python 2 support required, just fork and patch, there are only few lines of code there.
-
 django-mptt-urls uses [django-mptt](https://github.com/django-mptt/django-mptt). It will be automatically installed as a requirement.
 
 Installation
@@ -63,7 +60,7 @@ import mptt_urls
 
 urlpatterns = patterns('',
     ...
-    url(r'^gallery/(?P<path>.*)', mptt_urls.view(model='gallery.models.Category', view='gallery.views.category', slug_field='slug'), {'extra': 'You may also pass extra options as usual!'}, name='gallery'),
+    url(r'^gallery/(?P<path>.*)', mptt_urls.view(model='gallery.models.Category', view='gallery.views.category', slug_field='slug', trailing_slash=True), {'extra': 'You may also pass extra options as usual!'}, name='gallery'),
     ...
 )
 ```
