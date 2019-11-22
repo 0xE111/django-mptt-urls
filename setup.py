@@ -15,6 +15,7 @@ setup(
     license='MIT',
     description='Django app for creating hierarchical URLs associated with django-MPTT models.',
     long_description=README,
+    long_description_content_type="text/markdown",
     url='https://github.com/c0ntribut0r/django-mptt-urls',
     keywords='django mptt urls hierarchy clean friendly',
     classifiers=[
