@@ -34,7 +34,7 @@ Installation
 
 First of all, you should already be using django-mptt, something like this:
 
-```
+```python
 from mptt.models import MPTTModel, TreeForeignKey
 
 class Category(MPTTModel):
@@ -53,7 +53,7 @@ pip install django-mptt-urls
 
 Then, in your `urls.py`, replace one or more views with special `mptt_urls.view`:
 
-```
+```python
 # urls.py
 ...
 import mptt_urls
@@ -72,12 +72,12 @@ Here is what we've done:
 `mptt-urls.view` works like a decorator to a view: it gets fired when url resolution is performed, calculates an instance the `path` is poining to, and passes it to original view.
 
 So, if you write
-```
+```python
 url(r'^gallery/(?P<path>.*)', 'gallery.views.category', name='gallery'),
 ```
 the `gallery.views.category` view will receive `path` variable and will have to make object resolution.
 With `mptt_urls.view`, you will get the resolved object automatically - `gallery.views.category` view will receive `path` and `instance` variables:
-```
+```python
 url(r'^gallery/(?P<path>.*)', mptt_urls.view(model='gallery.models.Category', view='gallery.views.category', slug_field='slug'), name='gallery'),
 ```
 
@@ -90,7 +90,7 @@ get_absolute_url()
 ------------------
 Well, url(...) defines direct url resolution.
 To define reverse url resolution, add to your model:
-```
+```python
 class Category(MPTTModel):
     ...
     def get_absolute_url(self):
@@ -99,7 +99,7 @@ class Category(MPTTModel):
 Here, we use `Category.get_path()` which is available since using `mptt_urls.view`.
 
 If you use namespaced url routing, don't forget to add [namespace specifier](https://docs.djangoproject.com/en/1.9/topics/http/urls/#reversing-namespaced-urls) like this:
-```
+```python
 return reverse('namespace:gallery', kwargs={'path': self.get_path()})
 ```
 
